@@ -141,7 +141,7 @@ ${monIP} ansible_user=ubuntu
                                 echo "No changes to commit"
                             else
                                 git commit -m "Update Ansible inventory from Jenkins - AppVM: ${appIP}, MonitorVM: ${monIP}"
-                                git push https://\$GIT_USER:\$GIT_TOKEN@github.com/Light-zzz/DevOps_2_tier_Project-1.git HEAD:main
+                                git push https://\$GIT_USER:\$GIT_TOKEN@github.com/Light-zzz/DevOps_2_tier_Project-2.git HEAD:main
                                 echo "Inventory file pushed to GitHub successfully"
                             fi
                         """
@@ -179,5 +179,6 @@ ${monIP} ansible_user=ubuntu
         }
     }
 }
+
 
 
