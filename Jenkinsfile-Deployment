@@ -6,7 +6,7 @@ pipeline {
             name: 'ACTION',
             choices: ['up', 'down'],
             description: 'Docker Compose Action: "up" to deploy or "down" to remove',
-            defaultValue: 'up'
+            //defaultValue: 'up'
         )
     }
 
@@ -207,3 +207,4 @@ EOF
         }
     }
 }
+
