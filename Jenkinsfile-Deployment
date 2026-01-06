@@ -59,8 +59,88 @@ pipeline {
             }
         }
 
-        // Step 3: Docker Compose Up
-        stage('Step 3: Docker Compose Up') {
+        // Step 3: Build Docker Image
+        stage('Step 3: Build Docker Image') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+        
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+        
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+        
+                                echo "🛠 Building Flask Docker image..."
+                                docker build -t app-web .
+        
+                                echo "✅ Docker image built successfully"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Step 4: Run Flask Container
+        stage('Step 4: Run Flask Container') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+        
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+        
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                echo "🚀 Starting Flask container..."
+        
+                                docker rm -f flask_app || true
+        
+                                docker run -d \
+                                  --name flask_app \
+                                  --restart always \
+                                  -p 5000:5000 \
+                                  -e MYSQL_HOST=mysql_db \
+                                  -e MYSQL_USER=root \
+                                  -e MYSQL_PASSWORD=root \
+                                  -e MYSQL_DATABASE=registration_db \
+                                  app-web
+        
+                                docker ps
+                                echo "✅ Flask container is running"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Step 5: Docker Compose Up
+        stage('Step 5: Docker Compose Up') {
             when {
                 expression { params.ACTION == 'up' }
             }
@@ -108,8 +188,8 @@ EOF
             }
         }
 
-        // Step 4: Docker Compose Down
-        stage('Step 4: Docker Compose Down') {
+        // Step 6: Docker Compose Down
+        stage('Step 6: Docker Compose Down') {
             when {
                 expression { params.ACTION == 'down' }
             }
@@ -159,8 +239,8 @@ EOF
             }
         }
 
-        // Step 5: Deployment Success Message
-        stage('Step 5: Deployment Completed') {
+        // Step 7: Deployment Success Message
+        stage('Step 7: Deployment Completed') {
             steps {
                 script {
                     if (params.ACTION == 'up') {
@@ -207,5 +287,3 @@ EOF
         }
     }
 }
-
-
