@@ -4,7 +4,10 @@ import pymysql
 from flask import Flask, render_template, request, redirect, url_for, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 
-app = Flask(__name__)
+# Initialize Flask application
+# Templates are automatically served from the 'templates' directory
+# Static files (CSS, JS) are automatically served from the 'static' directory
+app = Flask(__name__, template_folder='templates', static_folder='static')
 
 # Configure Flask secret key from environment variable
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'supersecretkey')
@@ -25,6 +28,12 @@ def get_db():
         g.db = pymysql.connect(**MYSQL_CONFIG)
     return g.db
 
+def get_db_without_database():
+    """Get MySQL connection without specifying database (for creating databases)"""
+    config = MYSQL_CONFIG.copy()
+    config.pop('database', None)
+    return pymysql.connect(**config)
+
 @app.teardown_appcontext
 def close_db(error):
     """Close database connection"""
@@ -33,7 +42,7 @@ def close_db(error):
         db.close()
 
 def init_database():
-    """Initialize database and create users table if it doesn't exist"""
+    """Initialize main database and create users table if it doesn't exist"""
     max_retries = 30
     retry_count = 0
     
@@ -58,7 +67,7 @@ def init_database():
             cur.close()
             conn.close()
             
-            print("✅ Database initialized successfully!")
+            print("✅ Main database initialized successfully!")
             print(f"✅ Users table created/verified in database: {MYSQL_CONFIG['database']}")
             return True
             
@@ -72,8 +81,52 @@ def init_database():
     
     return False
 
+def create_user_database(username):
+    """Create a database for the specific username and initialize user_data table"""
+    try:
+        # Connect without specifying database
+        conn = get_db_without_database()
+        cur = conn.cursor()
+        
+        # Sanitize username for database name (only alphanumeric and underscore)
+        db_name = f"user_{username.lower().replace(' ', '_').replace('-', '_')}"
+        # Remove any special characters
+        db_name = ''.join(c for c in db_name if c.isalnum() or c == '_')
+        
+        # Create database for the user
+        cur.execute(f"CREATE DATABASE IF NOT EXISTS `{db_name}`")
+        conn.commit()
+        
+        # Switch to the user's database
+        cur.execute(f"USE `{db_name}`")
+        
+        # Create user_data table in the user's database
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS user_data (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                data_key VARCHAR(255) NOT NULL,
+                data_value TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                INDEX idx_data_key (data_key)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """)
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        print(f"✅ Created database '{db_name}' for user '{username}'")
+        print(f"✅ Created user_data table in database '{db_name}'")
+        return db_name
+        
+    except Exception as e:
+        print(f"❌ Error creating user database: {str(e)}")
+        raise
+
 @app.route('/')
 def home():
+    """Home/Welcome page - shows username if logged in, otherwise redirects to login"""
     if 'username' in session:
         return render_template('index.html', username=session['username'])
     return redirect(url_for('login'))
@@ -91,12 +144,21 @@ def register():
         try:
             db = get_db()
             cur = db.cursor()
+            
+            # Insert user into main users table
             cur.execute(
                 "INSERT INTO users(username, email, password) VALUES (%s, %s, %s)",
                 (username, email, hashed_password)
             )
             db.commit()
             cur.close()
+            
+            # Create user-specific database and table
+            try:
+                user_db_name = create_user_database(username)
+                print(f"✅ User '{username}' registered successfully with database '{user_db_name}'")
+            except Exception as e:
+                print(f"⚠️ Warning: User registered but database creation failed: {str(e)}")
             
             return redirect(url_for('login'))
         except Exception as e:

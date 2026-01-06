@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
@@ -8,10 +10,13 @@
 <div class="container">
     <form class="card fade-in" method="POST">
         <h2>Register</h2>
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button>Register</button>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        <input type="text" name="username" placeholder="Username" required autocomplete="username">
+        <input type="email" name="email" placeholder="Email" required autocomplete="email">
+        <input type="password" name="password" placeholder="Password" required autocomplete="new-password">
+        <button type="submit">Register</button>
         <p>Already have an account? <a href="/login">Login</a></p>
     </form>
 </div>

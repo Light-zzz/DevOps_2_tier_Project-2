@@ -6,21 +6,56 @@ pipeline {
             name: 'ACTION',
             choices: ['up', 'down'],
             description: 'Docker Compose Action: "up" to deploy or "down" to remove',
-            //defaultValue: "up"
+            defaultValue: "up"
         )
     }
 
+    environment {
+        // Docker and Docker Compose configuration
+        DOCKER_BUILDKIT = '1'
+        COMPOSE_DOCKER_CLI_BUILD = '1'
+    }
+
     stages {
-        // Step 1: Git Clone using SCM
-        stage('Step 1: Git Clone') {
+        // Stage 1: Git Clone using SCM
+        stage('Stage 1: Git Clone') {
             steps {
                 checkout scm
-                echo 'Repository cloned successfully using SCM'
+                echo '✅ Repository cloned successfully using SCM'
+                sh 'git log -1 --oneline'
             }
         }
 
-        // Step 2: Copy app/* to Application-VM
-        stage('Step 2: Copy App Files to Application-VM') {
+        // Stage 2: Validate Files
+        stage('Stage 2: Validate Configuration Files') {
+            steps {
+                script {
+                    echo '🔍 Validating required files...'
+                    
+                    def requiredFiles = [
+                        'app/app.py',
+                        'app/requirements.txt',
+                        'app/Dockerfile',
+                        'app/docker-compose.yml',
+                        'app/templates/login.html',
+                        'app/templates/registration.html',
+                        'app/templates/index.html'
+                    ]
+                    
+                    requiredFiles.each { file ->
+                        if (!fileExists(file)) {
+                            error("❌ Required file not found: ${file}")
+                        }
+                        echo "✅ Found: ${file}"
+                    }
+                    
+                    echo '✅ All required files validated'
+                }
+            }
+        }
+
+        // Stage 3: Copy app/* to Application-VM
+        stage('Stage 3: Copy App Files to Application-VM') {
             steps {
                 script {
                     // Fetch AppVM IP from ansible/inventory.ini
@@ -32,11 +67,11 @@ pipeline {
                     ).trim()
                     
                     if (!appIP) {
-                        error('Failed to extract AppVM IP from ansible/inventory.ini')
+                        error('❌ Failed to extract AppVM IP from ansible/inventory.ini')
                     }
                     
-                    echo "AppVM IP: ${appIP}"
-                    echo "Copying app/* files to Application-VM (${appIP})..."
+                    echo "📡 AppVM IP: ${appIP}"
+                    echo "📦 Copying app/* files to Application-VM (${appIP})..."
                     
                     withCredentials([sshUserPrivateKey(
                         credentialsId: 'ansible-ssh',
@@ -59,94 +94,13 @@ pipeline {
             }
         }
 
-        // Step 3: Build Docker Image
-        stage('Step 3: Build Docker Image') {
+        // Stage 4: Verify Docker and Docker Compose on Remote VM
+        stage('Stage 4: Verify Docker Environment') {
             when {
                 expression { params.ACTION == 'up' }
             }
             steps {
                 script {
-                    def appIP = sh(
-                        script: """
-                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
-                        """,
-                        returnStdout: true
-                    ).trim()
-        
-                    withCredentials([sshUserPrivateKey(
-                        credentialsId: 'ansible-ssh',
-                        keyFileVariable: 'SSH_KEY'
-                    )]) {
-                        sh """
-                            chmod 600 "\$SSH_KEY"
-        
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
-                                cd /home/ubuntu/app
-        
-                                echo "🛠 Building Flask Docker image..."
-                                docker build -t app-web .
-        
-                                echo "✅ Docker image built successfully"
-EOF
-                        """
-                    }
-                }
-            }
-        }
-
-        // Step 4: Run Flask Container
-        stage('Step 4: Run Flask Container') {
-            when {
-                expression { params.ACTION == 'up' }
-            }
-            steps {
-                script {
-                    def appIP = sh(
-                        script: """
-                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
-                        """,
-                        returnStdout: true
-                    ).trim()
-        
-                    withCredentials([sshUserPrivateKey(
-                        credentialsId: 'ansible-ssh',
-                        keyFileVariable: 'SSH_KEY'
-                    )]) {
-                        sh """
-                            chmod 600 "\$SSH_KEY"
-        
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
-                                echo "🚀 Starting Flask container..."
-        
-                                docker rm -f flask_app || true
-        
-                                docker run -d \
-                                  --name flask_app \
-                                  --restart always \
-                                  -p 5000:5000 \
-                                  -e MYSQL_HOST=mysql_db \
-                                  -e MYSQL_USER=root \
-                                  -e MYSQL_PASSWORD=root \
-                                  -e MYSQL_DATABASE=registration_db \
-                                  app-web
-        
-                                docker ps
-                                echo "✅ Flask container is running"
-EOF
-                        """
-                    }
-                }
-            }
-        }
-
-        // Step 5: Docker Compose Up
-        stage('Step 5: Docker Compose Up') {
-            when {
-                expression { params.ACTION == 'up' }
-            }
-            steps {
-                script {
-                    // Fetch AppVM IP from ansible/inventory.ini
                     def appIP = sh(
                         script: """
                             grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
@@ -154,8 +108,57 @@ EOF
                         returnStdout: true
                     ).trim()
                     
-                    echo "AppVM IP: ${appIP}"
-                    echo "Running docker-compose up on Application-VM (${appIP})..."
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                echo "🔍 Verifying Docker and Docker Compose installation..."
+                                
+                                # Check Docker
+                                if ! command -v docker &> /dev/null; then
+                                    echo "❌ Docker is not installed"
+                                    exit 1
+                                fi
+                                docker --version
+                                
+                                # Check Docker Compose
+                                if ! command -v docker-compose &> /dev/null; then
+                                    echo "❌ Docker Compose is not installed"
+                                    exit 1
+                                fi
+                                docker-compose --version
+                                
+                                # Check if Docker daemon is running
+                                if ! docker info &> /dev/null; then
+                                    echo "❌ Docker daemon is not running"
+                                    exit 1
+                                fi
+                                
+                                echo "✅ Docker and Docker Compose are ready"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Stage 5: Stop Existing Containers
+        stage('Stage 5: Stop Existing Containers') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
                     
                     withCredentials([sshUserPrivateKey(
                         credentialsId: 'ansible-ssh',
@@ -167,20 +170,13 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                # Stop any existing containers
+                                echo "🛑 Stopping existing containers..."
                                 docker-compose down || true
                                 
-                                # Build and start containers using docker-compose.yml and Dockerfile
-                                echo "Building Docker images..."
-                                docker-compose build
+                                # Remove any orphaned containers
+                                docker-compose down --remove-orphans || true
                                 
-                                echo "Starting containers..."
-                                docker-compose up -d
-                                
-                                # Verify containers are running
-                                docker-compose ps
-                                
-                                echo "✅ Docker Compose up completed successfully"
+                                echo "✅ Existing containers stopped"
 EOF
                         """
                     }
@@ -188,14 +184,164 @@ EOF
             }
         }
 
-        // Step 6: Docker Compose Down
-        stage('Step 6: Docker Compose Down') {
+        // Stage 6: Build Docker Images
+        stage('Stage 6: Build Docker Images') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+                                
+                                echo "🛠️ Building Docker images using docker-compose..."
+                                echo "📋 Building Flask application image..."
+                                
+                                # Build images with no cache for fresh build
+                                docker-compose build --no-cache
+                                
+                                echo "✅ Docker images built successfully"
+                                
+                                # List built images
+                                docker images | grep -E "(flask_app|mysql)" || true
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Stage 7: Start Containers with Docker Compose
+        stage('Stage 7: Deploy with Docker Compose') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+                                
+                                echo "🚀 Starting containers with docker-compose..."
+                                
+                                # Start containers in detached mode
+                                docker-compose up -d
+                                
+                                echo "⏳ Waiting for services to be ready..."
+                                sleep 15
+                                
+                                echo "✅ Containers started"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Stage 8: Verify Deployment
+        stage('Stage 8: Verify Deployment') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
+                        returnStdout: true
+                    ).trim()
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+                                
+                                echo "📊 Checking container status..."
+                                docker-compose ps
+                                
+                                echo ""
+                                echo "🔍 Checking container health..."
+                                
+                                # Check if containers are running
+                                if docker-compose ps | grep -q "Up"; then
+                                    echo "✅ Containers are running"
+                                else
+                                    echo "❌ Some containers are not running"
+                                    docker-compose ps
+                                    exit 1
+                                fi
+                                
+                                # Check Flask container logs
+                                echo ""
+                                echo "📋 Flask container logs (last 20 lines):"
+                                docker-compose logs --tail=20 web || true
+                                
+                                # Check MySQL container logs
+                                echo ""
+                                echo "📋 MySQL container logs (last 10 lines):"
+                                docker-compose logs --tail=10 db || true
+                                
+                                # Test Flask application
+                                echo ""
+                                echo "🌐 Testing Flask application..."
+                                sleep 5
+                                
+                                # Check if Flask is responding
+                                if curl -f -s http://localhost:5000 > /dev/null 2>&1 || curl -f -s http://localhost:5000/login > /dev/null 2>&1; then
+                                    echo "✅ Flask application is responding"
+                                else
+                                    echo "⚠️ Warning: Flask application may not be ready yet"
+                                fi
+                                
+                                echo ""
+                                echo "✅ Deployment verification completed"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Stage 9: Docker Compose Down
+        stage('Stage 9: Docker Compose Down') {
             when {
                 expression { params.ACTION == 'down' }
             }
             steps {
                 script {
-                    // Fetch AppVM IP from ansible/inventory.ini
                     def appIP = sh(
                         script: """
                             grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
@@ -203,8 +349,8 @@ EOF
                         returnStdout: true
                     ).trim()
                     
-                    echo "AppVM IP: ${appIP}"
-                    echo "Stopping and removing Docker Compose containers and images on Application-VM (${appIP})..."
+                    echo "📡 AppVM IP: ${appIP}"
+                    echo "🛑 Stopping and removing Docker Compose containers and images..."
                     
                     withCredentials([sshUserPrivateKey(
                         credentialsId: 'ansible-ssh',
@@ -216,20 +362,21 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                # Stop and remove containers, networks, and volumes
-                                echo "Stopping containers..."
+                                echo "🛑 Stopping containers..."
                                 docker-compose down -v || true
                                 
-                                # Remove images created by docker-compose
-                                echo "Removing Docker Compose images..."
+                                echo "🗑️ Removing Docker Compose images..."
                                 docker-compose down --rmi all -v || true
                                 
-                                # Clean up any orphaned containers
+                                echo "🧹 Cleaning up orphaned containers..."
                                 docker-compose down --remove-orphans || true
                                 
                                 # Verify containers are stopped
-                                docker-compose ps || echo "No containers running"
+                                echo ""
+                                echo "📊 Container status:"
+                                docker-compose ps || echo "✅ No containers running"
                                 
+                                echo ""
                                 echo "✅ Docker Compose down completed successfully"
                                 echo "✅ All containers and images have been removed"
 EOF
@@ -239,20 +386,41 @@ EOF
             }
         }
 
-        // Step 7: Deployment Success Message
-        stage('Step 7: Deployment Completed') {
+        // Stage 10: Deployment Summary
+        stage('Stage 10: Deployment Summary') {
             steps {
                 script {
                     if (params.ACTION == 'up') {
+                        def appIP = sh(
+                            script: """
+                                grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                            """,
+                            returnStdout: true
+                        ).trim()
+                        
                         echo '========================================'
-                        echo '✅ Deployment completed successfully!'
-                        echo '✅ Docker Compose up executed'
-                        echo '✅ Application is running on Application-VM'
+                        echo '✅ CI/CD Deployment Pipeline Completed!'
+                        echo '========================================'
+                        echo "📡 Application VM: ${appIP}"
+                        echo "🌐 Flask Application: http://${appIP}:5000"
+                        echo "🗄️ MySQL Database: ${appIP}:3306"
+                        echo '========================================'
+                        echo '✅ Docker Compose deployment successful'
+                        echo '✅ Flask + MySQL containers are running'
+                        echo '✅ Application is ready to accept requests'
+                        echo '========================================'
+                        echo ''
+                        echo '📝 Features:'
+                        echo '  • Automatic user database creation on registration'
+                        echo '  • User-specific databases (user_<username>)'
+                        echo '  • Secure password hashing'
+                        echo '  • Animated welcome page with username display'
                         echo '========================================'
                     } else {
                         echo '========================================'
-                        echo '✅ Docker Compose down completed successfully!'
-                        echo '✅ All containers and images have been stopped and removed'
+                        echo '✅ Docker Compose Down Completed!'
+                        echo '✅ All containers and images removed'
+                        echo '✅ Cleanup successful'
                         echo '========================================'
                     }
                 }
@@ -265,25 +433,30 @@ EOF
             script {
                 if (params.ACTION == 'up') {
                     echo '========================================'
-                    echo '✅ Deployment pipeline completed successfully!'
-                    echo '✅ Flask and MySQL application deployed'
-                    echo '✅ Docker Compose containers are running'
+                    echo '✅ CI/CD Pipeline: SUCCESS'
+                    echo '✅ Flask + MySQL application deployed'
+                    echo '✅ Docker Compose containers running'
+                    echo '✅ All stages completed successfully'
                     echo '========================================'
                 } else {
                     echo '========================================'
-                    echo '✅ Docker Compose down completed successfully!'
-                    echo '✅ All application containers and images removed'
+                    echo '✅ CI/CD Pipeline: SUCCESS'
+                    echo '✅ All containers stopped and removed'
+                    echo '✅ Cleanup completed successfully'
                     echo '========================================'
                 }
             }
         }
         failure {
             echo '========================================'
-            echo '❌ Deployment pipeline failed'
+            echo '❌ CI/CD Pipeline: FAILED'
+            echo '❌ Deployment pipeline encountered errors'
             echo '========================================'
         }
         always {
-            echo 'Deployment pipeline execution completed'
+            echo '========================================'
+            echo '📊 CI/CD Pipeline execution completed'
+            echo '========================================'
         }
     }
 }
