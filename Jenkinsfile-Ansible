@@ -74,9 +74,9 @@ pipeline {
                 script {
                     // Fetch AppVM IP from inventory.ini
                     def appIP = sh(
-                        script: '''
-                            grep -A 1 "^\[app" ansible/inventory.ini | tail -n 1 | awk '{print $1}'
-                        ''',
+                        script: """
+                            grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
                         returnStdout: true
                     ).trim()
                     
@@ -115,9 +115,9 @@ pipeline {
                 script {
                     // Fetch MonitorVM IP from inventory.ini
                     def monIP = sh(
-                        script: '''
-                            grep -A 1 "^\[monitor" ansible/inventory.ini | tail -n 1 | awk '{print $1}'
-                        ''',
+                        script: """
+                            grep -A 1 '^\\[monitor\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'
+                        """,
                         returnStdout: true
                     ).trim()
                     
@@ -187,4 +187,5 @@ pipeline {
         }
     }
 }
+
 
