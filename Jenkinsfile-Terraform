@@ -6,7 +6,7 @@ pipeline {
             name: 'ACTION',
             choices: ['apply', 'destroy'],
             description: 'Terraform Action "Apply or Destroy"',
-            defaultValue: "apply"
+            //defaultValue: "apply"
         )
     }
 
@@ -179,4 +179,5 @@ ${monIP} ansible_user=ubuntu
         }
     }
 }
+
 
