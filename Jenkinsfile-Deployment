@@ -1,0 +1,209 @@
+pipeline {
+    agent any
+
+    parameters {
+        choice(
+            name: 'ACTION',
+            choices: ['up', 'down'],
+            description: 'Docker Compose Action: "up" to deploy or "down" to remove',
+            defaultValue: 'up'
+        )
+    }
+
+    stages {
+        // Step 1: Git Clone using SCM
+        stage('Step 1: Git Clone') {
+            steps {
+                checkout scm
+                echo 'Repository cloned successfully using SCM'
+            }
+        }
+
+        // Step 2: Copy app/* to Application-VM
+        stage('Step 2: Copy App Files to Application-VM') {
+            steps {
+                script {
+                    // Fetch AppVM IP from ansible/inventory.ini
+                    def appIP = sh(
+                        script: '''
+                            grep -A 1 "^\[app\]" ansible/inventory.ini | tail -n 1 | awk '{print $1}'
+                        ''',
+                        returnStdout: true
+                    ).trim()
+                    
+                    if (!appIP) {
+                        error('Failed to extract AppVM IP from ansible/inventory.ini')
+                    }
+                    
+                    echo "AppVM IP: ${appIP}"
+                    echo "Copying app/* files to Application-VM (${appIP})..."
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            # Create app directory on remote VM
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} 'mkdir -p /home/ubuntu/app'
+                            
+                            # Copy app/* directory to Application-VM
+                            rsync -avz --delete -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
+                                app/ ubuntu@${appIP}:/home/ubuntu/app/
+                            
+                            echo "✅ App files copied successfully to Application-VM (${appIP})"
+                        """
+                    }
+                }
+            }
+        }
+
+        // Step 3: Docker Compose Up
+        stage('Step 3: Docker Compose Up') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    // Fetch AppVM IP from ansible/inventory.ini
+                    def appIP = sh(
+                        script: '''
+                            grep -A 1 "^\[app\]" ansible/inventory.ini | tail -n 1 | awk '{print $1}'
+                        ''',
+                        returnStdout: true
+                    ).trim()
+                    
+                    echo "AppVM IP: ${appIP}"
+                    echo "Running docker-compose up on Application-VM (${appIP})..."
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+                                
+                                # Stop any existing containers
+                                docker-compose down || true
+                                
+                                # Build and start containers using docker-compose.yml and Dockerfile
+                                echo "Building Docker images..."
+                                docker-compose build
+                                
+                                echo "Starting containers..."
+                                docker-compose up -d
+                                
+                                # Verify containers are running
+                                docker-compose ps
+                                
+                                echo "✅ Docker Compose up completed successfully"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Step 4: Docker Compose Down
+        stage('Step 4: Docker Compose Down') {
+            when {
+                expression { params.ACTION == 'down' }
+            }
+            steps {
+                script {
+                    // Fetch AppVM IP from ansible/inventory.ini
+                    def appIP = sh(
+                        script: '''
+                            grep -A 1 "^\[app\]" ansible/inventory.ini | tail -n 1 | awk '{print $1}'
+                        ''',
+                        returnStdout: true
+                    ).trim()
+                    
+                    echo "AppVM IP: ${appIP}"
+                    echo "Stopping and removing Docker Compose containers and images on Application-VM (${appIP})..."
+                    
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+                            
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                cd /home/ubuntu/app
+                                
+                                # Stop and remove containers, networks, and volumes
+                                echo "Stopping containers..."
+                                docker-compose down -v || true
+                                
+                                # Remove images created by docker-compose
+                                echo "Removing Docker Compose images..."
+                                docker-compose down --rmi all -v || true
+                                
+                                # Clean up any orphaned containers
+                                docker-compose down --remove-orphans || true
+                                
+                                # Verify containers are stopped
+                                docker-compose ps || echo "No containers running"
+                                
+                                echo "✅ Docker Compose down completed successfully"
+                                echo "✅ All containers and images have been removed"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Step 5: Deployment Success Message
+        stage('Step 5: Deployment Completed') {
+            steps {
+                script {
+                    if (params.ACTION == 'up') {
+                        echo '========================================'
+                        echo '✅ Deployment completed successfully!'
+                        echo '✅ Docker Compose up executed'
+                        echo '✅ Application is running on Application-VM'
+                        echo '========================================'
+                    } else {
+                        echo '========================================'
+                        echo '✅ Docker Compose down completed successfully!'
+                        echo '✅ All containers and images have been stopped and removed'
+                        echo '========================================'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            script {
+                if (params.ACTION == 'up') {
+                    echo '========================================'
+                    echo '✅ Deployment pipeline completed successfully!'
+                    echo '✅ Flask and MySQL application deployed'
+                    echo '✅ Docker Compose containers are running'
+                    echo '========================================'
+                } else {
+                    echo '========================================'
+                    echo '✅ Docker Compose down completed successfully!'
+                    echo '✅ All application containers and images removed'
+                    echo '========================================'
+                }
+            }
+        }
+        failure {
+            echo '========================================'
+            echo '❌ Deployment pipeline failed'
+            echo '========================================'
+        }
+        always {
+            echo 'Deployment pipeline execution completed'
+        }
+    }
+}
