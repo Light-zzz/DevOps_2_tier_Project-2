@@ -139,7 +139,7 @@ def register():
         password = request.form['password']
         
         # Hash the password before storing
-        hashed_password = generate_password_hash(password)
+        #hashed_password = generate_password_hash(password)
         
         try:
             db = get_db()
@@ -181,7 +181,8 @@ def login():
             user = cur.fetchone()
             cur.close()
             
-            if user and check_password_hash(user['password'], password):
+            #if user and check_password_hash(user['password'], password):
+            if user and user['password'] == password:
                 session['username'] = username
                 return redirect(url_for('home'))
             
@@ -206,4 +207,5 @@ if __name__ == "__main__":
     init_database()
     
     print("🌐 Flask app is ready!")
+
     app.run(host="0.0.0.0", port=5000, debug=False)
