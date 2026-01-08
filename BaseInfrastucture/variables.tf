@@ -14,7 +14,11 @@ variable "private_subnet_cidr" {
 description = "Private subnet CIDR"
 type = string
 }
-variable "AppVM" {
+variable "Jenkins" {
+description = "EC2 instance type for Jenkins master"
+type = string
+}
+variable "Slave" {
 description = "EC2 instance type for Jenkins master"
 type = string
 }
