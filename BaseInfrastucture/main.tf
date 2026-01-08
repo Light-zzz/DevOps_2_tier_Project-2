@@ -60,12 +60,12 @@ resource "aws_security_group" "sg" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
-    ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+    # ingress {
+    # from_port   = 80
+    # to_port     = 80
+    # protocol    = "tcp"
+    # cidr_blocks = ["0.0.0.0/0"]
+  # }
   egress {
     from_port   = 0
     to_port     = 0
@@ -75,13 +75,25 @@ resource "aws_security_group" "sg" {
 }
 
 # Jenkins VM
-resource "aws_instance" "AppVM" {
+resource "aws_instance" "Jenkins" {
   ami                    = var.ami
-  instance_type          = var.AppVM
+  instance_type          = var.Jenkins
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.sg.id]
   associate_public_ip_address = true
   key_name = var.key_name
   user_data = file("jenkins_terraform.sh")
   tags = { Name = "Jenkins-Base-VM" }
+}
+
+# Slave VM
+resource "aws_instance" "Slave" {
+  ami                    = var.ami
+  instance_type          = var.Slave
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.sg.id]
+  associate_public_ip_address = true
+  key_name = var.key_name
+  user_data = file("Slave.sh")
+  tags = { Name = "Jenkins-Slave-VM" }
 }
