@@ -1,9 +1,16 @@
-output "AppVM" {
+output "Slave" {
 description = "Public IP of Application VM"
-value = aws_instance.AppVM.public_ip
+value = aws_instance.Slave.public_ip
 }
-output "AppVM_Instance_ID" {
-value = aws_instance.AppVM.id
+output "Slave_Instance_ID" {
+value = aws_instance.Slave.id
+}
+output "Jenkins" {
+description = "Public IP of Application VM"
+value = aws_instance.Jenkins.public_ip
+}
+output "Jenkins_Instance_ID" {
+value = aws_instance.Jenkins.id
 }
 output "vpc_id" {
 value = aws_vpc.main.id
