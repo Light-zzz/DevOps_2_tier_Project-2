@@ -9,12 +9,12 @@ sudo apt install -y fontconfig openjdk-17-jdk wget gnupg
 java --version
 
 # Create Directory to store Slave Deployments
-mkdir -p /home/ubuntu/FlaskWebDeploy
+mkdir /home/ubuntu/app
 
 #Check Directory Permissions
-ls -ld /home/ubuntu/FlaskWebDeploy
+ls -ld /home/ubuntu/app
 
 # Give Required permissions
-sudo chown -R ubuntu:ubuntu /home/ubuntu/FlaskWebDeploy
-chmod 755 /home/ubuntu/FlaskWebDeploy
-chown ubuntu:ubuntu /home/ubuntu/FlaskWebDeploy
+sudo chown -R ubuntu:ubuntu /home/ubuntu/app
+chmod 755 /home/ubuntu/app
+chown ubuntu:ubuntu /home/ubuntu/app
