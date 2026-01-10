@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent {label 'web-app'}
 
     environment {
         ANSIBLE_HOST_KEY_CHECKING = "False"
@@ -187,5 +187,6 @@ pipeline {
         }
     }
 }
+
 
 
