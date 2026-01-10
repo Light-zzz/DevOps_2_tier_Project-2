@@ -16,25 +16,35 @@
       apt:
         update_cache: yes
 
-    # =============================
-    # Docker Installation
-    # =============================
-    - name: Install Docker
-      apt:
-        name: docker.io
-        state: present
+# =============================
+# Docker Installation
+# =============================
 
-    - name: Enable and start Docker
-      service:
-        name: docker
-        state: started
-        enabled: yes
+- name: Wait for apt lock to be released
+  shell: |
+    while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+      echo "Waiting for apt lock..."
+      sleep 5
+    done
+  changed_when: false
 
-    - name: Add ubuntu user to docker group
-      user:
-        name: ubuntu
-        groups: docker
-        append: yes
+- name: Install Docker
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Enable and start Docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Add ubuntu user to docker group
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
 
     # =============================
     # Docker Compose (Binary Method)
@@ -167,3 +177,4 @@
         -m ec2 \
         -c file:{{ cw_config_path }} \
         -s
+
