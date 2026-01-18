@@ -21,7 +21,7 @@ pipeline {
         stage('Stage 1: Git Clone') {
             steps {
                 checkout scm
-                echo '✅ Repository cloned successfully using SCM'
+                echo 'Repository cloned successfully using SCM'
                 sh 'git log -1 --oneline'
             }
         }
@@ -30,7 +30,7 @@ pipeline {
         stage('Stage 2: Validate Configuration Files') {
             steps {
                 script {
-                    echo '🔍 Validating required files...'
+                    echo 'Validating required files...'
                     
                     def requiredFiles = [
                         'app/app.py',
@@ -44,12 +44,12 @@ pipeline {
                     
                     requiredFiles.each { file ->
                         if (!fileExists(file)) {
-                            error("❌ Required file not found: ${file}")
+                            error("Required file not found: ${file}")
                         }
-                        echo "✅ Found: ${file}"
+                        echo "Found: ${file}"
                     }
                     
-                    echo '✅ All required files validated'
+                    echo 'All required files validated'
                 }
             }
         }
@@ -67,11 +67,11 @@ pipeline {
                     ).trim()
                     
                     if (!appIP) {
-                        error('❌ Failed to extract AppVM IP from ansible/inventory.ini')
+                        error('Failed to extract AppVM IP from ansible/inventory.ini')
                     }
                     
-                    echo "📡 AppVM IP: ${appIP}"
-                    echo "📦 Copying app/* files to Application-VM (${appIP})..."
+                    echo "AppVM IP: ${appIP}"
+                    echo "Copying app/* files to Application-VM (${appIP})..."
                     
                     withCredentials([sshUserPrivateKey(
                         credentialsId: 'ansible-ssh',
@@ -87,7 +87,7 @@ pipeline {
                             rsync -avz --delete -e "ssh -i \$SSH_KEY -o StrictHostKeyChecking=no" \
                                 app/ ubuntu@${appIP}:/home/ubuntu/app/
                             
-                            echo "✅ App files copied successfully to Application-VM (${appIP})"
+                            echo "App files copied successfully to Application-VM (${appIP})"
                         """
                     }
                 }
@@ -116,29 +116,29 @@ pipeline {
                             chmod 600 "\$SSH_KEY"
                             
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
-                                echo "🔍 Verifying Docker and Docker Compose installation..."
+                                echo "Verifying Docker and Docker Compose installation..."
                                 
                                 # Check Docker
                                 if ! command -v docker &> /dev/null; then
-                                    echo "❌ Docker is not installed"
+                                    echo "Docker is not installed"
                                     exit 1
                                 fi
                                 docker --version
                                 
                                 # Check Docker Compose
                                 if ! command -v docker-compose &> /dev/null; then
-                                    echo "❌ Docker Compose is not installed"
+                                    echo "Docker Compose is not installed"
                                     exit 1
                                 fi
                                 docker-compose --version
                                 
                                 # Check if Docker daemon is running
                                 if ! docker info &> /dev/null; then
-                                    echo "❌ Docker daemon is not running"
+                                    echo "Docker daemon is not running"
                                     exit 1
                                 fi
                                 
-                                echo "✅ Docker and Docker Compose are ready"
+                                echo "Docker and Docker Compose are ready"
 EOF
                         """
                     }
@@ -170,13 +170,13 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                echo "🛑 Stopping existing containers..."
+                                echo "Stopping existing containers..."
                                 docker-compose down || true
                                 
                                 # Remove any orphaned containers
                                 docker-compose down --remove-orphans || true
                                 
-                                echo "✅ Existing containers stopped"
+                                echo "Existing containers stopped"
 EOF
                         """
                     }
@@ -208,13 +208,13 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                echo "🛠️ Building Docker images using docker-compose..."
-                                echo "📋 Building Flask application image..."
+                                echo "Building Docker images using docker-compose..."
+                                echo "Building Flask application image..."
                                 
                                 # Build images with no cache for fresh build
                                 docker-compose build --no-cache
                                 
-                                echo "✅ Docker images built successfully"
+                                echo "Docker images built successfully"
                                 
                                 # List built images
                                 docker images | grep -E "(flask_app|mysql)" || true
@@ -249,15 +249,15 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                echo "🚀 Starting containers with docker-compose..."
+                                echo "Starting containers with docker-compose..."
                                 
                                 # Start containers in detached mode
                                 docker-compose up -d
                                 
-                                echo "⏳ Waiting for services to be ready..."
+                                echo "Waiting for services to be ready..."
                                 sleep 15
                                 
-                                echo "✅ Containers started"
+                                echo "Containers started"
 EOF
                         """
                     }
@@ -289,45 +289,45 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                echo "📊 Checking container status..."
+                                echo "Checking container status..."
                                 docker-compose ps
                                 
                                 echo ""
-                                echo "🔍 Checking container health..."
+                                echo "Checking container health..."
                                 
                                 # Check if containers are running
                                 if docker-compose ps | grep -q "Up"; then
-                                    echo "✅ Containers are running"
+                                    echo "Containers are running"
                                 else
-                                    echo "❌ Some containers are not running"
+                                    echo "Some containers are not running"
                                     docker-compose ps
                                     exit 1
                                 fi
                                 
                                 # Check Flask container logs
                                 echo ""
-                                echo "📋 Flask container logs (last 20 lines):"
+                                echo "Flask container logs (last 20 lines):"
                                 docker-compose logs --tail=20 web || true
                                 
                                 # Check MySQL container logs
                                 echo ""
-                                echo "📋 MySQL container logs (last 10 lines):"
+                                echo "MySQL container logs (last 10 lines):"
                                 docker-compose logs --tail=10 db || true
                                 
                                 # Test Flask application
                                 echo ""
-                                echo "🌐 Testing Flask application..."
+                                echo "Testing Flask application..."
                                 sleep 5
                                 
                                 # Check if Flask is responding
                                 if curl -f -s http://localhost:5000 > /dev/null 2>&1 || curl -f -s http://localhost:5000/login > /dev/null 2>&1; then
-                                    echo "✅ Flask application is responding"
+                                    echo "Flask application is responding"
                                 else
-                                    echo "⚠️ Warning: Flask application may not be ready yet"
+                                    echo "Warning: Flask application may not be ready yet"
                                 fi
                                 
                                 echo ""
-                                echo "✅ Deployment verification completed"
+                                echo "Deployment verification completed"
 EOF
                         """
                     }
@@ -349,8 +349,8 @@ EOF
                         returnStdout: true
                     ).trim()
                     
-                    echo "📡 AppVM IP: ${appIP}"
-                    echo "🛑 Stopping and removing Docker Compose containers and images..."
+                    echo "AppVM IP: ${appIP}"
+                    echo "Stopping and removing Docker Compose containers and images..."
                     
                     withCredentials([sshUserPrivateKey(
                         credentialsId: 'ansible-ssh',
@@ -362,23 +362,23 @@ EOF
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 cd /home/ubuntu/app
                                 
-                                echo "🛑 Stopping containers..."
+                                echo "Stopping containers..."
                                 docker-compose down -v || true
                                 
-                                echo "🗑️ Removing Docker Compose images..."
+                                echo "Removing Docker Compose images..."
                                 docker-compose down --rmi all -v || true
                                 
-                                echo "🧹 Cleaning up orphaned containers..."
+                                echo "Cleaning up orphaned containers..."
                                 docker-compose down --remove-orphans || true
                                 
                                 # Verify containers are stopped
                                 echo ""
-                                echo "📊 Container status:"
-                                docker-compose ps || echo "✅ No containers running"
+                                echo "Container status:"
+                                docker-compose ps || echo "No containers running"
                                 
                                 echo ""
-                                echo "✅ Docker Compose down completed successfully"
-                                echo "✅ All containers and images have been removed"
+                                echo "Docker Compose down completed successfully"
+                                echo "All containers and images have been removed"
 EOF
                         """
                     }
@@ -399,28 +399,28 @@ EOF
                         ).trim()
                         
                         echo '========================================'
-                        echo '✅ CI/CD Deployment Pipeline Completed!'
+                        echo 'CI/CD Deployment Pipeline Completed!'
                         echo '========================================'
-                        echo "📡 Application VM: ${appIP}"
-                        echo "🌐 Flask Application: http://${appIP}:5000"
-                        echo "🗄️ MySQL Database: ${appIP}:3306"
+                        echo "Application VM: ${appIP}"
+                        echo "Flask Application: http://${appIP}:5000"
+                        echo "MySQL Database: ${appIP}:3306"
                         echo '========================================'
-                        echo '✅ Docker Compose deployment successful'
-                        echo '✅ Flask + MySQL containers are running'
-                        echo '✅ Application is ready to accept requests'
+                        echo 'Docker Compose deployment successful'
+                        echo 'Flask + MySQL containers are running'
+                        echo 'Application is ready to accept requests'
                         echo '========================================'
                         echo ''
-                        echo '📝 Features:'
-                        echo '  • Automatic user database creation on registration'
-                        echo '  • User-specific databases (user_<username>)'
-                        echo '  • Secure password hashing'
-                        echo '  • Animated welcome page with username display'
+                        echo 'Features:'
+                        echo ' 1. Automatic user database creation on registration'
+                        echo ' 2. User-specific databases (user_<username>)'
+                        echo ' 3. Secure password hashing'
+                        echo ' 4. Animated welcome page with username display'
                         echo '========================================'
                     } else {
                         echo '========================================'
-                        echo '✅ Docker Compose Down Completed!'
-                        echo '✅ All containers and images removed'
-                        echo '✅ Cleanup successful'
+                        echo 'Docker Compose Down Completed!'
+                        echo 'All containers and images removed'
+                        echo 'Cleanup successful'
                         echo '========================================'
                     }
                 }
@@ -433,32 +433,31 @@ EOF
             script {
                 if (params.ACTION == 'up') {
                     echo '========================================'
-                    echo '✅ CI/CD Pipeline: SUCCESS'
-                    echo '✅ Flask + MySQL application deployed'
-                    echo '✅ Docker Compose containers running'
-                    echo '✅ All stages completed successfully'
+                    echo 'CI/CD Pipeline: SUCCESS'
+                    echo 'Flask + MySQL application deployed'
+                    echo 'Docker Compose containers running'
+                    echo 'All stages completed successfully'
                     echo '========================================'
                 } else {
                     echo '========================================'
-                    echo '✅ CI/CD Pipeline: SUCCESS'
-                    echo '✅ All containers stopped and removed'
-                    echo '✅ Cleanup completed successfully'
+                    echo 'CI/CD Pipeline: SUCCESS'
+                    echo 'All containers stopped and removed'
+                    echo 'Cleanup completed successfully'
                     echo '========================================'
                 }
             }
         }
         failure {
             echo '========================================'
-            echo '❌ CI/CD Pipeline: FAILED'
-            echo '❌ Deployment pipeline encountered errors'
+            echo 'CI/CD Pipeline: FAILED'
+            echo 'Deployment pipeline encountered errors'
             echo '========================================'
         }
         always {
             echo '========================================'
-            echo '📊 CI/CD Pipeline execution completed'
+            echo 'CI/CD Pipeline execution completed'
             echo '========================================'
         }
     }
 
 }
-
