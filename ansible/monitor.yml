@@ -46,7 +46,7 @@
         enabled: yes
 
     # =============================
-    # Grafana
+    # Grafana (FIXED GPG METHOD)
     # =============================
     - name: Install Grafana dependencies
       apt:
@@ -54,13 +54,25 @@
           - apt-transport-https
           - software-properties-common
           - wget
+          - gnupg
         state: present
 
-    - name: Add Grafana GPG key
+    - name: Download Grafana GPG key
       get_url:
         url: https://packages.grafana.com/gpg.key
-        dest: /usr/share/keyrings/grafana.gpg
+        dest: /tmp/grafana.key
         mode: '0644'
+
+    - name: Dearmor Grafana GPG key
+      command: >
+        gpg --dearmor /tmp/grafana.key
+      args:
+        creates: /usr/share/keyrings/grafana.gpg
+      register: grafana_key
+
+    - name: Move Grafana GPG key to keyring
+      command: mv /tmp/grafana.key.gpg /usr/share/keyrings/grafana.gpg
+      when: grafana_key is changed
 
     - name: Add Grafana repository
       apt_repository:
@@ -141,3 +153,4 @@
         name: node_exporter
         state: started
         enabled: yes
+
