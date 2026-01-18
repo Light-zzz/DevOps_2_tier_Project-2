@@ -114,7 +114,7 @@ pipeline {
         
                             ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
                                 echo "Creating docker log directories..."
-                                sudo mkdir -p /dockerlogs/flask
+                                sudo mkdir -p /dockerlogs/web_app.log
                                 sudo chmod -R 755 /dockerlogs
                                 sudo chown -R ubuntu:ubuntu /dockerlogs
                                 echo "Docker log directories created at /dockerlogs"
@@ -492,4 +492,5 @@ EOF
     }
 
 }
+
 
