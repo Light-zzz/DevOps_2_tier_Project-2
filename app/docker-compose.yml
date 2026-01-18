@@ -9,6 +9,10 @@ services:
     container_name: flask_app
     ports:
       - "5000:5000"
+    volumes:
+      - /dockerlogs/flask:/app/logs
+    environment:
+      - FLASK_ENV=production
     depends_on:
       db:
         condition: service_healthy
@@ -64,4 +68,5 @@ volumes:
 
 networks:
   app_network:
+
     driver: bridge
