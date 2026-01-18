@@ -1,7 +1,6 @@
 version: "3.9"
 
 services:
-  # Flask Web Application Service
   web:
     build:
       context: .
@@ -9,30 +8,35 @@ services:
     container_name: flask_app
     ports:
       - "5000:5000"
-    volumes:
-      - /dockerlogs/flask:/app/logs
     environment:
-      - FLASK_ENV=production
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      # MySQL Database Configuration
+      # Flask
+      FLASK_ENV: production
+      FLASK_SECRET_KEY: flask-secret-key-change-in-production-2024
+      PYTHONUNBUFFERED: 1
+
+      # MySQL
       MYSQL_HOST: db
       MYSQL_USER: root
       MYSQL_PASSWORD: root
       MYSQL_DATABASE: registration_db
       MYSQL_PORT: 3306
-      # Flask Configuration
-      FLASK_SECRET_KEY: flask-secret-key-change-in-production-2024
-      PYTHONUNBUFFERED: 1
+
     volumes:
-      # Mount templates and static files for development (optional)
+      # Persistent logs for CloudWatch
+      - /dockerlogs/flask:/app/logs
+
+      # Optional (development only)
       - ./templates:/app/templates:ro
       - ./static:/app/static:ro
+
+    depends_on:
+      db:
+        condition: service_healthy
+
     restart: unless-stopped
     networks:
       - app_network
+
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/')"]
       interval: 30s
@@ -40,7 +44,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # MySQL Database Service
   db:
     image: mysql:8.0
     container_name: mysql_db
@@ -48,18 +51,24 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: registration_db
+
     volumes:
       - mysql_data:/var/lib/mysql
+
     networks:
       - app_network
+
+    # OPTIONAL: Remove if DB should not be public
     ports:
       - "3306:3306"
+
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+
     command: --default-authentication-plugin=mysql_native_password
 
 volumes:
@@ -68,5 +77,4 @@ volumes:
 
 networks:
   app_network:
-
     driver: bridge
