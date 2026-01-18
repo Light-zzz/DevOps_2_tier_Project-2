@@ -182,7 +182,7 @@ graph TB
             RT[Route Table]
         end
         
-        SG[Security Group<br/>Ports: 22, 80, 5000, 3000, 9090, 9100]
+        SG[Security Group<br/>Ports: 22, 80, 5000, 3000, 9090, 9100 ]
     end
     
     Internet[Internet] --> IGW
@@ -740,27 +740,14 @@ graph TB
 
 ## 👥 Contributors
 
-- Project maintained by DevOps team
-- For issues or questions, please create an issue in the repository
-
+- Project maintained by Own
 ---
 
 ## 📄 License
 
-This project is for educational and demonstration purposes.
-
----
-
-## 🔗 Related Documentation
-
-- [Terraform Documentation](https://www.terraform.io/docs)
-- [Ansible Documentation](https://docs.ansible.com)
-- [Jenkins Documentation](https://www.jenkins.io/doc)
-- [Docker Documentation](https://docs.docker.com)
-- [Flask Documentation](https://flask.palletsprojects.com)
-
+This project is My DevOps 2-tier Project.
 ---
 
 **Last Updated**: 2025
 **Version**: 2.0
-**Copy Right - Dipesh.**
+**Copy Right**: Dipesh
