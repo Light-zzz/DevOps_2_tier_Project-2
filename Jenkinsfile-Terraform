@@ -79,7 +79,7 @@ pipeline {
             }
             steps {
                 echo '========================================'
-                echo '✅ All resources destroyed successfully!'
+                echo 'All resources destroyed successfully!'
                 echo '========================================'
                 echo 'Terraform destroy operation completed'
                 echo 'All infrastructure resources have been removed'
@@ -156,22 +156,22 @@ ${monIP} ansible_user=ubuntu
             script {
                 if (params.ACTION == 'apply') {
                     echo '========================================'
-                    echo '✅ Terraform infrastructure created successfully!'
-                    echo '✅ Ansible inventory updated and pushed to GitHub'
+                    echo 'Terraform infrastructure created successfully!'
+                    echo 'Ansible inventory updated and pushed to GitHub'
                     echo '========================================'
                     // Trigger next Jenkinsfile-Ansible only on successful apply
                     build job: 'Ansible-Pipeline', wait: false
                     echo 'Triggered Ansible-Pipeline job'
                 } else {
                     echo '========================================'
-                    echo '✅ Terraform destroy completed successfully!'
+                    echo 'Terraform destroy completed successfully!'
                     echo '========================================'
                 }
             }
         }
         failure {
             echo '========================================'
-            echo '❌ Terraform pipeline failed'
+            echo 'Terraform pipeline failed'
             echo '========================================'
         }
         always {
@@ -179,6 +179,3 @@ ${monIP} ansible_user=ubuntu
         }
     }
 }
-
-
-
