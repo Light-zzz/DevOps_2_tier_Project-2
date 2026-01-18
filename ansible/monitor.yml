@@ -1,34 +1,53 @@
-- hosts: monitor
+---
+- name: Configure Monitor Server
+  hosts: monitor
   become: yes
+
   vars:
     node_exporter_version: "1.6.1"
     node_exporter_user: node_exporter
 
   tasks:
-    # -----------------------------
+    # =============================
+    # Wait for APT Lock (CRITICAL)
+    # =============================
+    - name: Wait for apt lock to be released
+      shell: |
+        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for apt lock..."
+          sleep 5
+        done
+      changed_when: false
+
+    # =============================
     # Update System
-    # -----------------------------
+    # =============================
     - name: Update apt cache
       apt:
         update_cache: yes
+        cache_valid_time: 3600
 
-    # -----------------------------
+    # =============================
     # Prometheus
-    # -----------------------------
+    # =============================
     - name: Install Prometheus
       apt:
         name: prometheus
         state: present
+      retries: 5
+      delay: 10
+      register: prometheus_install
+      until: prometheus_install is succeeded
 
     - name: Enable and start Prometheus
-      service:
+      systemd:
         name: prometheus
         state: started
         enabled: yes
 
-    # -----------------------------
-    # Grafana (Official Repository)
-    # -----------------------------
+    # =============================
+    # Grafana
+    # =============================
     - name: Install Grafana dependencies
       apt:
         name:
@@ -40,11 +59,12 @@
     - name: Add Grafana GPG key
       get_url:
         url: https://packages.grafana.com/gpg.key
-        dest: /usr/share/keyrings/grafana.key
+        dest: /usr/share/keyrings/grafana.gpg
+        mode: '0644'
 
     - name: Add Grafana repository
       apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/oss/deb stable main"
+        repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/oss/deb stable main"
         state: present
         filename: grafana
 
@@ -58,14 +78,14 @@
         state: present
 
     - name: Enable and start Grafana
-      service:
+      systemd:
         name: grafana-server
         state: started
         enabled: yes
 
-    # -----------------------------
+    # =============================
     # Node Exporter
-    # -----------------------------
+    # =============================
     - name: Create node_exporter user
       user:
         name: "{{ node_exporter_user }}"
@@ -96,6 +116,7 @@
     - name: Create Node Exporter systemd service
       copy:
         dest: /etc/systemd/system/node_exporter.service
+        mode: '0644'
         content: |
           [Unit]
           Description=Prometheus Node Exporter
@@ -112,10 +133,11 @@
           WantedBy=multi-user.target
 
     - name: Reload systemd
-      command: systemctl daemon-reexec
+      systemd:
+        daemon_reload: yes
 
     - name: Enable and start Node Exporter
-      service:
+      systemd:
         name: node_exporter
         state: started
         enabled: yes
