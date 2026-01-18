@@ -67,16 +67,16 @@ def init_database():
             cur.close()
             conn.close()
             
-            print("✅ Main database initialized successfully!")
-            print(f"✅ Users table created/verified in database: {MYSQL_CONFIG['database']}")
+            print("Main database initialized successfully!")
+            print(f"Users table created/verified in database: {MYSQL_CONFIG['database']}")
             return True
             
         except Exception as e:
             retry_count += 1
             if retry_count >= max_retries:
-                print(f"❌ Failed to initialize database after {max_retries} attempts: {str(e)}")
+                print(f"Failed to initialize database after {max_retries} attempts: {str(e)}")
                 raise
-            print(f"⏳ Waiting for MySQL to be ready... (Attempt {retry_count}/{max_retries})")
+            print(f"Waiting for MySQL to be ready... (Attempt {retry_count}/{max_retries})")
             time.sleep(2)
     
     return False
@@ -116,12 +116,12 @@ def create_user_database(username):
         cur.close()
         conn.close()
         
-        print(f"✅ Created database '{db_name}' for user '{username}'")
-        print(f"✅ Created user_data table in database '{db_name}'")
+        print(f"Created database '{db_name}' for user '{username}'")
+        print(f"Created user_data table in database '{db_name}'")
         return db_name
         
     except Exception as e:
-        print(f"❌ Error creating user database: {str(e)}")
+        print(f"Error creating user database: {str(e)}")
         raise
 
 @app.route('/')
@@ -156,9 +156,9 @@ def register():
             # Create user-specific database and table
             try:
                 user_db_name = create_user_database(username)
-                print(f"✅ User '{username}' registered successfully with database '{user_db_name}'")
+                print(f"User '{username}' registered successfully with database '{user_db_name}'")
             except Exception as e:
-                print(f"⚠️ Warning: User registered but database creation failed: {str(e)}")
+                print(f"Warning: User registered but database creation failed: {str(e)}")
             
             return redirect(url_for('login'))
         except Exception as e:
@@ -200,13 +200,12 @@ def logout():
 
 if __name__ == "__main__":
     # Initialize database before starting the app
-    print("🚀 Starting Flask application...")
-    print(f"📊 Connecting to MySQL at {MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}")
-    print(f"📁 Database: {MYSQL_CONFIG['database']}")
+    print("Starting Flask application...")
+    print(f"Connecting to MySQL at {MYSQL_CONFIG['host']}:{MYSQL_CONFIG['port']}")
+    print(f"Database: {MYSQL_CONFIG['database']}")
     
     init_database()
     
-    print("🌐 Flask app is ready!")
+    print("Flask app is ready!")
 
     app.run(host="0.0.0.0", port=5000, debug=False)
-
