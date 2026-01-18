@@ -1,82 +1,50 @@
----
-- name: Configure Monitor Server
-  hosts: monitor
+- hosts: monitor
   become: yes
-
   vars:
     node_exporter_version: "1.6.1"
     node_exporter_user: node_exporter
 
   tasks:
-    # =============================
-    # Wait for APT Lock (CRITICAL)
-    # =============================
-    - name: Wait for apt lock to be released
-      shell: |
-        while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
-          echo "Waiting for apt lock..."
-          sleep 5
-        done
-      changed_when: false
-
-    # =============================
+    # -----------------------------
     # Update System
-    # =============================
+    # -----------------------------
     - name: Update apt cache
       apt:
         update_cache: yes
-        cache_valid_time: 3600
 
-    # =============================
+    # -----------------------------
     # Prometheus
-    # =============================
+    # -----------------------------
     - name: Install Prometheus
       apt:
         name: prometheus
         state: present
-      retries: 5
-      delay: 10
-      register: prometheus_install
-      until: prometheus_install is succeeded
 
     - name: Enable and start Prometheus
-      systemd:
+      service:
         name: prometheus
         state: started
         enabled: yes
 
-    # =============================
-    # Grafana (FIXED GPG METHOD)
-    # =============================
+    # -----------------------------
+    # Grafana (Official Repository)
+    # -----------------------------
     - name: Install Grafana dependencies
       apt:
         name:
           - apt-transport-https
           - software-properties-common
           - wget
-          - gnupg
         state: present
 
-    - name: Download Grafana GPG key
+    - name: Add Grafana GPG key
       get_url:
         url: https://packages.grafana.com/gpg.key
-        dest: /tmp/grafana.key
-        mode: '0644'
-
-    - name: Dearmor Grafana GPG key
-      command: >
-        gpg --dearmor /tmp/grafana.key
-      args:
-        creates: /usr/share/keyrings/grafana.gpg
-      register: grafana_key
-
-    - name: Move Grafana GPG key to keyring
-      command: mv /tmp/grafana.key.gpg /usr/share/keyrings/grafana.gpg
-      when: grafana_key is changed
+        dest: /usr/share/keyrings/grafana.key
 
     - name: Add Grafana repository
       apt_repository:
-        repo: "deb [signed-by=/usr/share/keyrings/grafana.gpg] https://packages.grafana.com/oss/deb stable main"
+        repo: "deb [signed-by=/usr/share/keyrings/grafana.key] https://packages.grafana.com/oss/deb stable main"
         state: present
         filename: grafana
 
@@ -90,14 +58,14 @@
         state: present
 
     - name: Enable and start Grafana
-      systemd:
+      service:
         name: grafana-server
         state: started
         enabled: yes
 
-    # =============================
+    # -----------------------------
     # Node Exporter
-    # =============================
+    # -----------------------------
     - name: Create node_exporter user
       user:
         name: "{{ node_exporter_user }}"
@@ -128,7 +96,6 @@
     - name: Create Node Exporter systemd service
       copy:
         dest: /etc/systemd/system/node_exporter.service
-        mode: '0644'
         content: |
           [Unit]
           Description=Prometheus Node Exporter
@@ -145,12 +112,10 @@
           WantedBy=multi-user.target
 
     - name: Reload systemd
-      systemd:
-        daemon_reload: yes
+      command: systemctl daemon-reexec
 
     - name: Enable and start Node Exporter
-      systemd:
+      service:
         name: node_exporter
         state: started
         enabled: yes
-
