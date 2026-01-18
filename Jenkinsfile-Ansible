@@ -63,7 +63,7 @@ pipeline {
                     
                     // List inventory
                     sh 'ansible-inventory -i ansible/inventory.ini --list'
-                    echo '✅ Ansible setup verified successfully'
+                    echo 'Ansible setup verified successfully'
                 }
             }
         }
@@ -102,7 +102,7 @@ pipeline {
                                 --limit app \
                                 app.yml
                             
-                            echo "✅ app.yml playbook completed successfully on AppVM (${appIP})"
+                            echo "app.yml playbook completed successfully on AppVM (${appIP})"
                         """
                     }
                 }
@@ -143,7 +143,7 @@ pipeline {
                                 --limit monitor \
                                 monitor.yml
                             
-                            echo "✅ monitor.yml playbook completed successfully on MonitorVM (${monIP})"
+                            echo "monitor.yml playbook completed successfully on MonitorVM (${monIP})"
                         """
                     }
                 }
@@ -155,15 +155,15 @@ pipeline {
             steps {
                 script {
                     echo '========================================'
-                    echo '✅ All Ansible playbooks completed successfully!'
-                    echo '✅ app.yml executed on AppVM'
-                    echo '✅ monitor.yml executed on MonitorVM'
+                    echo 'All Ansible playbooks completed successfully!'
+                    echo 'app.yml executed on AppVM'
+                    echo 'monitor.yml executed on MonitorVM'
                     echo '========================================'
                     echo 'Triggering Deployment Pipeline...'
                     
                     // Trigger Jenkinsfile-Deployment pipeline
                     build job: 'Deployment-Pipeline', wait: false
-                    echo '✅ Deployment-Pipeline job triggered successfully'
+                    echo 'Deployment-Pipeline job triggered successfully'
                 }
             }
         }
@@ -172,14 +172,14 @@ pipeline {
     post {
         success {
             echo '========================================'
-            echo '✅ Ansible pipeline completed successfully!'
-            echo '✅ All playbooks executed successfully'
-            echo '✅ Deployment pipeline has been triggered'
+            echo 'Ansible pipeline completed successfully!'
+            echo 'All playbooks executed successfully'
+            echo 'Deployment pipeline has been triggered'
             echo '========================================'
         }
         failure {
             echo '========================================'
-            echo '❌ Ansible pipeline failed'
+            echo 'Ansible pipeline failed'
             echo '========================================'
         }
         always {
@@ -187,6 +187,3 @@ pipeline {
         }
     }
 }
-
-
-
