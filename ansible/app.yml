@@ -1,5 +1,6 @@
+
 ---
-- name: Configure Application Server (Docker + Monitoring)
+- name: Configure App Server
   hosts: app
   become: yes
 
@@ -9,74 +10,65 @@
     node_exporter_version: "1.6.1"
 
   tasks:
-
-    # ==========================================================
-    # System Preparation
-    # ==========================================================
+    # =============================
+    # System Update
+    # =============================
     - name: Update apt cache
       apt:
         update_cache: yes
 
-    - name: Wait for apt lock
+    # =============================
+    # Docker Installation
+    # =============================
+    
+    - name: Wait for apt lock to be released
       shell: |
         while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+          echo "Waiting for apt lock..."
           sleep 5
         done
       changed_when: false
-
-    # ==========================================================
-    # Docker Installation
-    # ==========================================================
+    
     - name: Install Docker
       apt:
         name: docker.io
         state: present
-
+        update_cache: yes
+    
     - name: Enable and start Docker
-      systemd:
+      service:
         name: docker
-        enabled: yes
         state: started
-
+        enabled: yes
+    
     - name: Add ubuntu user to docker group
       user:
         name: ubuntu
         groups: docker
         append: yes
 
-    # ==========================================================
-    # Docker Compose (Binary)
-    # ==========================================================
+    # =============================
+    # Docker Compose (Binary Method)
+    # =============================
     - name: Install Docker Compose
       get_url:
         url: https://github.com/docker/compose/releases/download/v2.24.0/docker-compose-linux-x86_64
         dest: /usr/local/bin/docker-compose
         mode: '0755'
 
-    - name: Verify Docker Compose
+    - name: Verify Docker Compose installation
       command: docker-compose --version
+      register: compose_version
       changed_when: false
 
-    # ==========================================================
-    # Docker Logs Directory (for CloudWatch)
-    # ==========================================================
-    - name: Create docker logs directory
-      file:
-        path: /dockerlogs/flask
-        state: directory
-        owner: ubuntu
-        group: ubuntu
-        mode: '0755'
-        recurse: yes
-
-    # ==========================================================
-    # Node Exporter (Prometheus)
-    # ==========================================================
+    # =============================
+    # Node Exporter
+    # =============================
     - name: Create node_exporter user
       user:
         name: node_exporter
-        system: yes
         shell: /usr/sbin/nologin
+        system: yes
         create_home: no
 
     - name: Download Node Exporter
@@ -99,14 +91,14 @@
         mode: '0755'
         remote_src: yes
 
-    - name: Create Node Exporter service
+    - name: Create Node Exporter systemd service
       copy:
         dest: /etc/systemd/system/node_exporter.service
         content: |
           [Unit]
           Description=Node Exporter
-          After=network-online.target
           Wants=network-online.target
+          After=network-online.target
 
           [Service]
           User=node_exporter
@@ -124,9 +116,9 @@
         state: started
         daemon_reload: yes
 
-    # ==========================================================
+    # =============================
     # CloudWatch Agent
-    # ==========================================================
+    # =============================
     - name: Download CloudWatch Agent
       get_url:
         url: "{{ cw_agent_url }}"
@@ -136,16 +128,15 @@
       apt:
         deb: /tmp/amazon-cloudwatch-agent.deb
 
-    - name: Ensure CloudWatch config directory exists
+    - name: Create CloudWatch Agent config directory
       file:
         path: /opt/aws/amazon-cloudwatch-agent/etc
         state: directory
         recurse: yes
 
-    - name: Configure CloudWatch Agent (Metrics + Docker Logs)
+    - name: Configure CloudWatch Agent
       copy:
         dest: "{{ cw_config_path }}"
-        mode: '0644'
         content: |
           {
             "agent": {
@@ -162,7 +153,8 @@
                     "cpu_usage_idle",
                     "cpu_usage_user",
                     "cpu_usage_system"
-                  ]
+                  ],
+                  "metrics_collection_interval": 60
                 },
                 "mem": {
                   "measurement": [
@@ -176,28 +168,15 @@
                   "resources": ["*"]
                 }
               }
-            },
-            "logs": {
-              "logs_collected": {
-                "files": {
-                  "collect_list": [
-                    {
-                      "file_path": "/dockerlogs/flask/*.log",
-                      "log_group_name": "/webapp/flask",
-                      "log_stream_name": "{instance_id}",
-                      "timezone": "UTC"
-                    }
-                  ]
-                }
-              }
             }
           }
 
-    - name: Restart CloudWatch Agent
+    - name: Start CloudWatch Agent
       shell: |
-        /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a stop || true
         /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
         -a fetch-config \
         -m ec2 \
         -c file:{{ cw_config_path }} \
         -s
+
+
