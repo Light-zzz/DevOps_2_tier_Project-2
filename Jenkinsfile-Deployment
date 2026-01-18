@@ -364,10 +364,10 @@ EOF
                                 cd /home/ubuntu/app
 
                                 echo "Copy Logs From docker-compose Service web to dockerlogs directory"
-                                docker-compose logs -f web > /home/ubuntu/app/dockerlogs/web_app.log &
+                                docker-compose logs web > /home/ubuntu/app/dockerlogs/web_app.log
 
                                 echo "Copy Logs From docker-compose Service db to dockerlogs directory"
-                                docker-compose logs -f db > /home/ubuntu/app/dockerlogs/Mysql_db.log &
+                                docker-compose logs db > /home/ubuntu/app/dockerlogs/Mysql_db.log
 EOF
                         """
                     }
@@ -501,6 +501,7 @@ EOF
     }
 
 }
+
 
 
 
