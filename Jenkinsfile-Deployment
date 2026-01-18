@@ -94,37 +94,6 @@ pipeline {
             }
         }
 
-        stage('Stage 4.5: Create Docker Logs Directory') {
-            when {
-                expression { params.ACTION == 'up' }
-            }
-            steps {
-                script {
-                    def appIP = sh(
-                        script: "grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'",
-                        returnStdout: true
-                    ).trim()
-        
-                    withCredentials([sshUserPrivateKey(
-                        credentialsId: 'ansible-ssh',
-                        keyFileVariable: 'SSH_KEY'
-                    )]) {
-                        sh """
-                            chmod 600 "\$SSH_KEY"
-        
-                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
-                                echo "Creating docker log directories..."
-                                sudo mkdir -p /dockerlogs/web_app.log
-                                sudo chmod -R 755 /dockerlogs
-                                sudo chown -R ubuntu:ubuntu /dockerlogs
-                                echo "Docker log directories created at /dockerlogs"
-EOF
-                        """
-                    }
-                }
-            }
-        }
-
         // Stage 4: Verify Docker and Docker Compose on Remote VM
         stage('Stage 4: Verify Docker Environment') {
             when {
@@ -366,8 +335,46 @@ EOF
             }
         }
 
-        // Stage 9: Docker Compose Down
-        stage('Stage 9: Docker Compose Down') {
+        //Stage 9: To copy the docker-compose logs of service Like web & db.
+        stage('Stage 9: Create DockerLogs Directory and copy logs') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: "grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'",
+                        returnStdout: true
+                    ).trim()
+        
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+        
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                echo "Creating docker log directories..."
+                                sudo mkdir -p /home/ubuntu/app/dockerlogs
+                                sudo chmod 755 /home/ubuntu/app/dockerlogs
+                                sudo chown -R ubuntu:ubuntu /home/ubuntu/app/dockerlogs
+                                echo "Docker log directories created at /dockerlogs"
+
+                                echo "Copy Logs From docker-compose Service web to dockerlogs directory"
+                                docker-compose logs -f web > /home/ubuntu/app/dockerlogs/web_app.log &
+
+                                echo "Copy Logs From docker-compose Service db to dockerlogs directory"
+                                docker-compose logs -f db > /home/ubuntu/app/dockerlogs/Mysql_db.log &
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
+        // Stage 10: Docker Compose Down
+        stage('Stage 10: Docker Compose Down') {
             when {
                 expression { params.ACTION == 'down' }
             }
@@ -417,8 +424,8 @@ EOF
             }
         }
 
-        // Stage 10: Deployment Summary
-        stage('Stage 10: Deployment Summary') {
+        // Stage 11: Deployment Summary
+        stage('Stage 11: Deployment Summary') {
             steps {
                 script {
                     if (params.ACTION == 'up') {
@@ -492,5 +499,6 @@ EOF
     }
 
 }
+
 
 
