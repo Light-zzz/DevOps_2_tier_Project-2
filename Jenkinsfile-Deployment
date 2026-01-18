@@ -94,6 +94,37 @@ pipeline {
             }
         }
 
+        stage('Stage 4.5: Create Docker Logs Directory') {
+            when {
+                expression { params.ACTION == 'up' }
+            }
+            steps {
+                script {
+                    def appIP = sh(
+                        script: "grep -A 1 '^\\[app\\]' ansible/inventory.ini | tail -n 1 | awk '{print \$1}'",
+                        returnStdout: true
+                    ).trim()
+        
+                    withCredentials([sshUserPrivateKey(
+                        credentialsId: 'ansible-ssh',
+                        keyFileVariable: 'SSH_KEY'
+                    )]) {
+                        sh """
+                            chmod 600 "\$SSH_KEY"
+        
+                            ssh -o StrictHostKeyChecking=no -i "\$SSH_KEY" ubuntu@${appIP} << 'EOF'
+                                echo "Creating docker log directories..."
+                                sudo mkdir -p /dockerlogs/flask
+                                sudo chmod -R 755 /dockerlogs
+                                sudo chown -R ubuntu:ubuntu /dockerlogs
+                                echo "Docker log directories created at /dockerlogs"
+EOF
+                        """
+                    }
+                }
+            }
+        }
+
         // Stage 4: Verify Docker and Docker Compose on Remote VM
         stage('Stage 4: Verify Docker Environment') {
             when {
@@ -461,3 +492,4 @@ EOF
     }
 
 }
+
