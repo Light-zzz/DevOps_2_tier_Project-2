@@ -1,0 +1,35 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_REPO_NAME: ECS_Web_App
+    AWS_DEFAULT_REGION: eu-north-1
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION \
+        | docker login --username AWS --password-stdin \
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - cd AWS_resource
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+
+  build:
+    commands:
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG \
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+
+  post_build:
+    commands:
+      - docker run -d -p 8080:80 $IMAGE_REPO_NAME:$IMAGE_TAG
+      - sleep 10
+      - curl -f http://localhost:8080
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - printf '[{"name":"ecs-container","imageUri":"%s"}]' \
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files:
+    - AWS_resource/imagedefinitions.json
