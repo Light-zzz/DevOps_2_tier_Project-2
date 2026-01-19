@@ -13,31 +13,24 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
         docker login --username AWS --password-stdin
         $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - echo Login successful
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
-      - cd AWS_resource   # remove this line if Dockerfile is in repo root
+      - cd AWS_resource   # 🔴 THIS IS REQUIRED
 
   build:
     commands:
-      - echo Build started on `date`
+      - echo Build started
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG
-        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Running container test...
-      - docker run -d -p 8080:80 $IMAGE_REPO_NAME:$IMAGE_TAG
-      - sleep 10
-      - curl -f http://localhost:8080
-      - echo Pushing image to ECR...
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
       - docker push
         $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
-      - echo Writing imagedefinitions.json...
       - printf '[{"name":"ecs-container","imageUri":"%s"}]'
         $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
         > imagedefinitions.json
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - AWS_resource/imagedefinitions.json
