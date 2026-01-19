@@ -2,34 +2,42 @@ version: 0.2
 
 env:
   variables:
-    IMAGE_REPO_NAME: ECS_Web_App
-    AWS_DEFAULT_REGION: eu-north-1
+    AWS_ACCOUNT_ID: "831516339607"
+    AWS_DEFAULT_REGION: "eu-north-1"
+    IMAGE_REPO_NAME: "ecr-web-app"
 
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION \
-        | docker login --username AWS --password-stdin \
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
+        docker login --username AWS --password-stdin
         $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - cd AWS_resource
+      - echo Login successful
       - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - cd AWS_resource   # remove this line if Dockerfile is in repo root
 
   build:
     commands:
+      - echo Build started on `date`
       - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG \
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG
         $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
 
   post_build:
     commands:
+      - echo Running container test...
       - docker run -d -p 8080:80 $IMAGE_REPO_NAME:$IMAGE_TAG
       - sleep 10
       - curl -f http://localhost:8080
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
-      - printf '[{"name":"ecs-container","imageUri":"%s"}]' \
-        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json
+      - echo Pushing image to ECR...
+      - docker push
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - echo Writing imagedefinitions.json...
+      - printf '[{"name":"ecs-container","imageUri":"%s"}]'
+        $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+        > imagedefinitions.json
 
 artifacts:
   files:
-    - AWS_resource/imagedefinitions.json
+    - imagedefinitions.json
