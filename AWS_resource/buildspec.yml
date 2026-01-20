@@ -12,6 +12,7 @@ phases:
       - echo Logging in to Amazon ECR
       - aws sts get-caller-identity
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 831516339607.dkr.ecr.$AWS_REGION.amazonaws.com
+      - cd AWS_resource
 
   build:
     commands:
