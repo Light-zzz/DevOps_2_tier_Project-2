@@ -10,14 +10,15 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR
-      - aws --version
-      - docker --version
-      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 831516339607.dkr.ecr.eu-north-1.amazonaws.com
+      - aws sts get-caller-identity
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 831516339607.dkr.ecr.$AWS_REGION.amazonaws.com
 
   build:
     commands:
-      - echo Running unit tests
-      - pip install -r requirements.txt
+      - echo Installing dependencies
+      - python --version
+      - pip3 install --upgrade pip
+      - pip3 install -r requirements.txt
       - pytest
 
       - echo Building Docker image
@@ -26,9 +27,5 @@ phases:
 
   post_build:
     commands:
-      - echo Pushing Docker image to ECR
+      - echo Pushing Docker image
       - docker push $ECR_REPO_URI:$IMAGE_TAG
-
-artifacts:
-  files:
-    - '**/*'
