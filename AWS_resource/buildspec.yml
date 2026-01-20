@@ -2,8 +2,8 @@ version: 0.2
 
 env:
 variables:
-AWS_REGION: ap-south-1
-IMAGE_REPO_NAME: flask-ci-app
+AWS_REGION: eu-north-1
+IMAGE_REPO_NAME: flask-app
 IMAGE_TAG: latest
 
 phases:
