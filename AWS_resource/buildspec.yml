@@ -9,25 +9,27 @@ env:
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR
+      - echo "Logging in to Amazon ECR"
       - aws sts get-caller-identity
       - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin 831516339607.dkr.ecr.$AWS_REGION.amazonaws.com
       - cd AWS_resource
 
   build:
     commands:
+      - echo "Inside AWS_resource directory"
+      - ls -l
       - export PYTHONPATH=$PWD
-      - echo Installing dependencies
-      - python --version
       - pip3 install --upgrade pip
       - pip3 install -r requirements.txt
       - pytest
-
-      - echo Building Docker image
       - docker build -t flask-app:$IMAGE_TAG .
       - docker tag flask-app:$IMAGE_TAG $ECR_REPO_URI:$IMAGE_TAG
 
   post_build:
     commands:
-      - echo Pushing Docker image
       - docker push $ECR_REPO_URI:$IMAGE_TAG
+      - printf '[{\"name\":\"flask-container\",\"imageUri\":\"%s\"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files:
+    - AWS_resource/imagedefinitions.json
