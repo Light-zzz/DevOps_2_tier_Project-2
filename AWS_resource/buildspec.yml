@@ -15,15 +15,16 @@ phases:
 
   build:
     commands:
-      - echo Building Docker image
+      - echo Build started
+      - cd AWS_resource
       - docker build -t $ECR_REPO_URI:$IMAGE_TAG .
 
   post_build:
     commands:
-      - echo Pushing Docker image
+      - echo Push image
       - docker push $ECR_REPO_URI:$IMAGE_TAG
       - printf '[{"name":"web","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
   files:
-    - imagedefinitions.json
+    - AWS_resource/imagedefinitions.json
