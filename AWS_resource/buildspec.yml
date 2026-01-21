@@ -10,8 +10,8 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPO_URI
-      - cd AWS_resource
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION |
+        docker login --username AWS --password-stdin $ECR_REPO_URI
 
   build:
     commands:
@@ -20,7 +20,7 @@ phases:
 
   post_build:
     commands:
-      - echo Pushing Docker image to ECR
+      - echo Pushing Docker image
       - docker push $ECR_REPO_URI:$IMAGE_TAG
       - printf '[{"name":"web","imageUri":"%s"}]' $ECR_REPO_URI:$IMAGE_TAG > imagedefinitions.json
 
