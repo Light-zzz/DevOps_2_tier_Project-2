@@ -1,12 +1,457 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>DevOps Flask App</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Engineer Portfolio</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <h1> Flask App Deployed using AWS DevOps Pipeline.................testing</h1>
-    <button onclick="showMessage()">Click Me</button>
-    <script src="javascript.js"></script>
+    <!-- Header/Navigation -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="logo">
+                <div class="logo-icon">D</div>
+                <span class="logo-text">DevOps-Testing-Jenkins</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#about">About</a></li>
+                <li><a href="#portfolio">Portfolio</a></li>
+                <li><a href="#blog">Blog</a></li>
+                <li><a href="#services">Services</a></li>
+                <li><a href="#contact" class="btn-contact">Contact</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1>Hello, I'm <span class="gradient-text">DevOps Engineer</span></h1>
+                    <p>I'm a Freelance DevOps Engineer and Cloud Architect based in London, England. I specialize in building scalable, reliable, and efficient infrastructure solutions through automation, CI/CD pipelines, and cloud-native technologies.</p>
+                    <a href="#contact" class="btn-primary">Say Hello!</a>
+                </div>
+                <div class="hero-image">
+                    <div class="image-wrapper">
+                        <img src="images/devops-engineer.jpg" alt="DevOps Engineer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Statistics Section -->
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">10 Y.</div>
+                    <div class="stat-label">Experience</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">150+</div>
+                    <div class="stat-label">Projects Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">45</div>
+                    <div class="stat-label">Happy Clients</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-image">
+                    <img src="https://via.placeholder.com/400x500/8B5CF6/FFFFFF?text=About+Me" alt="About Me">
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-docker"></i></a>
+                        <a href="#"><i class="fab fa-aws"></i></a>
+                    </div>
+                </div>
+                <div class="about-text">
+                    <h2>I am Professional DevOps Engineer</h2>
+                    <p>With over a decade of experience in DevOps, cloud infrastructure, and automation, I help organizations transform their development and deployment processes. I specialize in creating robust CI/CD pipelines, managing cloud infrastructure, containerization with Docker and Kubernetes, and implementing Infrastructure as Code (IaC) solutions.</p>
+                    <p>My passion lies in building scalable, secure, and efficient systems that enable teams to deliver software faster and more reliably. I work with modern tools and technologies including AWS, Azure, GCP, Terraform, Ansible, Jenkins, GitLab CI, and more.</p>
+                    <div class="about-buttons">
+                        <a href="#portfolio" class="btn-primary">My Projects</a>
+                        <a href="#" class="btn-secondary" download>Download CV <i class="fas fa-download"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Work Process Section -->
+    <section class="work-process">
+        <div class="container">
+            <div class="work-process-content">
+                <div class="work-process-text">
+                    <h2>Work Process</h2>
+                    <p>My approach to DevOps involves a systematic methodology that ensures reliability, scalability, and efficiency. I follow a proven process that transforms your infrastructure and development workflow.</p>
+                </div>
+                <div class="work-process-grid">
+                    <div class="process-card">
+                        <div class="process-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <div class="process-number">01</div>
+                        <h3>Assessment</h3>
+                        <p>Analyze current infrastructure, identify bottlenecks, and understand your business requirements.</p>
+                    </div>
+                    <div class="process-card">
+                        <div class="process-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="process-number">02</div>
+                        <h3>Design</h3>
+                        <p>Design scalable architecture and automation strategies tailored to your needs.</p>
+                    </div>
+                    <div class="process-card">
+                        <div class="process-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <div class="process-number">03</div>
+                        <h3>Implement</h3>
+                        <p>Build CI/CD pipelines, infrastructure automation, and monitoring solutions.</p>
+                    </div>
+                    <div class="process-card">
+                        <div class="process-icon">
+                            <i class="fas fa-rocket"></i>
+                        </div>
+                        <div class="process-number">04</div>
+                        <h3>Deploy</h3>
+                        <p>Deploy and optimize your infrastructure with continuous monitoring and improvements.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="portfolio">
+        <div class="container">
+            <div class="section-header">
+                <h2>Portfolio</h2>
+                <p>Check a selection of my recent work, showcasing my DevOps skills and expertise.</p>
+            </div>
+            <div class="portfolio-grid">
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=CI%2FCD+Pipeline" alt="CI/CD Pipeline">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">CI/CD</span>
+                        <h3>Automated Deployment Pipeline</h3>
+                        <p>Built a comprehensive CI/CD pipeline using Jenkins and GitLab CI for automated testing and deployment.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=Kubernetes+Cluster" alt="Kubernetes">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Kubernetes</span>
+                        <h3>Kubernetes Cluster Setup</h3>
+                        <p>Designed and implemented a production-ready Kubernetes cluster with auto-scaling and monitoring.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=Cloud+Infrastructure" alt="Cloud Infrastructure">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Cloud</span>
+                        <h3>AWS Infrastructure Automation</h3>
+                        <p>Created Infrastructure as Code using Terraform to manage multi-region AWS infrastructure.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=Docker+Containers" alt="Docker">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Docker</span>
+                        <h3>Containerization Strategy</h3>
+                        <p>Migrated legacy applications to Docker containers with optimized Dockerfiles and orchestration.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=Monitoring+Dashboard" alt="Monitoring">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Monitoring</span>
+                        <h3>Monitoring & Alerting System</h3>
+                        <p>Implemented comprehensive monitoring solution using Prometheus, Grafana, and ELK stack.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+                <div class="portfolio-card">
+                    <div class="portfolio-image">
+                        <img src="https://via.placeholder.com/400x300/8B5CF6/FFFFFF?text=Security+Hardening" alt="Security">
+                    </div>
+                    <div class="portfolio-content">
+                        <span class="portfolio-tag">Security</span>
+                        <h3>Infrastructure Security Hardening</h3>
+                        <p>Enhanced security posture with automated security scanning and compliance checks.</p>
+                        <a href="#" class="portfolio-link">Case Study <i class="fas fa-arrow-right"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="portfolio-footer">
+                <a href="#" class="btn-primary">View All Projects</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta">
+        <div class="container">
+            <h2>Do you have a Project Idea? Let's discuss your project!</h2>
+            <p>I'm always open to discussing new projects and creative ideas, let's connect and build something amazing together.</p>
+            <a href="#contact" class="btn-primary">Let's work together</a>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="blog" class="blog">
+        <div class="container">
+            <div class="section-header">
+                <h2>Blog</h2>
+                <p>Check out my recent blog posts where I share insights on DevOps, cloud infrastructure, and the latest industry trends.</p>
+            </div>
+            <div class="blog-grid">
+                <div class="blog-card">
+                    <div class="blog-image">
+                        <img src="https://via.placeholder.com/300x200/8B5CF6/FFFFFF?text=Kubernetes+Guide" alt="Blog Post">
+                    </div>
+                    <div class="blog-content">
+                        <span class="blog-meta">20 Jul, 2023 / DevOps</span>
+                        <h3>Getting Started with Kubernetes: A Complete Guide</h3>
+                    </div>
+                </div>
+                <div class="blog-card">
+                    <div class="blog-image">
+                        <img src="https://via.placeholder.com/300x200/8B5CF6/FFFFFF?text=CI%2FCD+Best+Practices" alt="Blog Post">
+                    </div>
+                    <div class="blog-content">
+                        <span class="blog-meta">15 Jul, 2023 / CI/CD</span>
+                        <h3>CI/CD Best Practices for Modern Development Teams</h3>
+                    </div>
+                </div>
+                <div class="blog-card">
+                    <div class="blog-image">
+                        <img src="https://via.placeholder.com/300x200/8B5CF6/FFFFFF?text=Cloud+Architecture" alt="Blog Post">
+                    </div>
+                    <div class="blog-content">
+                        <span class="blog-meta">10 Jul, 2023 / Cloud</span>
+                        <h3>Designing Scalable Cloud Architecture Patterns</h3>
+                    </div>
+                </div>
+                <div class="blog-card">
+                    <div class="blog-image">
+                        <img src="https://via.placeholder.com/300x200/8B5CF6/FFFFFF?text=Infrastructure+as+Code" alt="Blog Post">
+                    </div>
+                    <div class="blog-content">
+                        <span class="blog-meta">5 Jul, 2023 / IaC</span>
+                        <h3>Infrastructure as Code: Terraform vs Ansible</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="blog-pagination">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="services-content">
+                <div class="services-text">
+                    <h2>What I do?</h2>
+                    <p>I specialize in creating efficient, scalable, and reliable infrastructure solutions that enable organizations to deliver software faster and more reliably. My expertise spans across cloud platforms, automation, and modern DevOps practices.</p>
+                    <a href="#contact" class="btn-primary">Say Hello!</a>
+                </div>
+                <div class="services-grid">
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-cloud"></i>
+                        </div>
+                        <h3>Cloud Infrastructure</h3>
+                        <p>Design and implement scalable cloud solutions on AWS, Azure, and GCP. I help you leverage cloud-native services for optimal performance and cost efficiency.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <h3>CI/CD Pipelines</h3>
+                        <p>Build automated CI/CD pipelines using Jenkins, GitLab CI, GitHub Actions, and other modern tools to streamline your development workflow.</p>
+                    </div>
+                    <div class="service-card">
+                        <div class="service-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <h3>Container Orchestration</h3>
+                        <p>Implement containerization strategies with Docker and Kubernetes, enabling scalable and portable application deployments.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Clients Section -->
+    <section class="clients">
+        <div class="container">
+            <div class="section-header">
+                <h2>Happy Clients</h2>
+                <p>I've had the pleasure of working with a diverse range of companies, from startups to established brands.</p>
+            </div>
+            <div class="clients-grid">
+                <div class="client-logo"><i class="fab fa-google"></i></div>
+                <div class="client-logo"><i class="fab fa-amazon"></i></div>
+                <div class="client-logo"><i class="fab fa-microsoft"></i></div>
+                <div class="client-logo"><i class="fab fa-docker"></i></div>
+                <div class="client-logo"><i class="fab fa-github"></i></div>
+                <div class="client-logo"><i class="fab fa-aws"></i></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonial Section -->
+    <section class="testimonial">
+        <div class="container">
+            <div class="section-header">
+                <h2>Testimonial</h2>
+            </div>
+            <div class="testimonial-content">
+                <p class="testimonial-quote">"From the initial consultation to the final delivery, every step was handled professionally. The infrastructure automation and CI/CD pipeline implementation transformed our development process. The end result was a system that not only met our needs but also impressed our stakeholders. Highly recommended!"</p>
+                <div class="testimonial-author">
+                    <h4>John Smith</h4>
+                    <p>CTO, Tech Solutions Inc.</p>
+                </div>
+            </div>
+            <div class="testimonial-pagination">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact">
+        <div class="container">
+            <div class="contact-wrapper">
+                <div class="contact-info">
+                    <h2>Let's discuss your Project</h2>
+                    <p>I'm available for freelance work and consulting. Feel free to reach out if you have a project in mind or just want to chat about DevOps.</p>
+                    <div class="contact-details">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div>
+                                <h4>Address</h4>
+                                <p>London, United Kingdom</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <div>
+                                <h4>Email</h4>
+                                <p>devops@example.com</p>
+                            </div>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <div>
+                                <h4>Call For Me</h4>
+                                <p>+44-123-456-7890</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-social">
+                        <a href="#"><i class="fab fa-github"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-docker"></i></a>
+                        <a href="#"><i class="fab fa-aws"></i></a>
+                    </div>
+                </div>
+                <div class="contact-form-wrapper">
+                    <form id="contactForm" class="contact-form" action="contact.php" method="POST">
+                        <div class="form-group">
+                            <input type="text" name="name" placeholder="Name*" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="email" name="email" placeholder="Email*" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="location" placeholder="Location*" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" name="subject" placeholder="Subject*" required>
+                        </div>
+                        <div class="form-group">
+                            <textarea name="message" placeholder="Message*" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">Send Message</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <div class="logo-icon">D</div>
+                    <span class="logo-text">DevOps Pro</span>
+                </div>
+                <div class="footer-nav">
+                    <a href="#home">Home</a>
+                    <a href="#about">About</a>
+                    <a href="#portfolio">Portfolio</a>
+                    <a href="#blog">Blog</a>
+                    <a href="#services">Services</a>
+                    <a href="#contact">Contact</a>
+                </div>
+                <div class="footer-copyright">
+                    <p>Copyright © 2023 DevOps Pro.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Developed with Dipesh by DevOps Pro</p>
+            </div>
+        </div>
+        <button class="scroll-top" id="scrollTop">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+    </footer>
+
+    <script src="script.js"></script>
 </body>
 </html>
