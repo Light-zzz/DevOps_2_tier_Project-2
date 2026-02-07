@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     AWS_DEFAULT_REGION: eu-north-1
-    ECR_REPO_URI: 831516339607.dkr.ecr.eu-north-1.amazonaws.com/ecr-web-app
+    ECR_REPO_URI: 831516339607.dkr.ecr.us-east-2.amazonaws.com/ecr-web-app
     IMAGE_TAG: latest
 
 phases:
